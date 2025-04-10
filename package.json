@@ -1,0 +1,23 @@
+{
+    "name": "ruang-warna-revamped",
+    "version": "1.0.0",
+    "description": "Website screening dan dukungan kesehatan mental Ruang Warna",
+    "main": "index.html",
+    "scripts": {
+      "build": "tailwindcss -i ./src/input.css -o ./css/style.css",
+      "watch": "tailwindcss -i ./src/input.css -o ./css/style.css --watch",
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+      "kesehatan mental",
+      "screening",
+      "tailwind",
+      "javascript"
+    ],
+    "author": "Nama Anda Atau Biarkan Kosong",
+    "license": "ISC",
+    "devDependencies": {
+      "tailwindcss": "^3.4.4"
+    }
+  }
+  

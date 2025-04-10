@@ -1,0 +1,39 @@
+<svg width="450" height="350" viewBox="0 0 450 350" xmlns="http://www.w3.org/2000/svg" aria-labelledby="heroIllusTitleRev">
+    <title id="heroIllusTitleRev">Ilustrasi Hero Ruang Warna (Revisi)</title>
+    <defs>
+        <linearGradient id="heroBgGradRev" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#F0FDFA" /> <!-- teal-lightest -->
+            <stop offset="100%" stop-color="#FEFCE8" /> <!-- yellow-lightest -->
+        </linearGradient>
+         <filter id="softBlurHero" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="10" result="blurred"/>
+            <feMerge>
+                <feMergeNode in="blurred"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    </defs>
+
+    <!-- Background lembut -->
+    <rect width="450" height="350" rx="25" fill="url(#heroBgGradRev)" />
+
+    <!-- Elemen Cair/Organik (seperti air/awan) -->
+    <path d="M 50 250 C 150 150, 300 350, 400 200 C 500 50, 350 50, 250 150 C 150 250, 50 350, 50 250 Z"
+          fill="#CFFAFE" opacity="0.6" filter="url(#softBlurHero)" /> <!-- cyan-100 -->
+
+     <path d="M 300 300 C 400 250, 450 300, 400 340 C 350 380, 250 350, 300 300 Z"
+           fill="#D1FAE5" opacity="0.7" filter="url(#softBlurHero)" /> <!-- green-100 -->
+
+    <!-- Tanaman stilasi -->
+    <g transform="translate(100, 280) rotate(-15)">
+        <path d="M 0 0 C 20 -50, 40 -80, 50 -120" fill="none" stroke="#2DD4BF" stroke-width="6" stroke-linecap="round"/>
+        <ellipse cx="30" cy="-60" rx="20" ry="12" fill="#6EE7B7" opacity="0.8" transform="rotate(45 30 -60)"/>
+        <ellipse cx="60" cy="-100" rx="18" ry="10" fill="#A7F3D0" opacity="0.9" transform="rotate(-30 60 -100)"/>
+    </g>
+
+     <!-- Batu Zen (Simbol Keseimbangan) -->
+     <ellipse cx="350" cy="290" rx="40" ry="20" fill="#E7E5E4" stroke="#A8A29E" stroke-width="1"/> <!-- stone-200 / stone-400 -->
+     <ellipse cx="350" cy="265" rx="30" ry="15" fill="#F5F5F4" stroke="#A8A29E" stroke-width="1"/> <!-- stone-100 -->
+     <ellipse cx="350" cy="245" rx="20" ry="10" fill="#FAFAF9" stroke="#A8A29E" stroke-width="1"/> <!-- stone-50 -->
+
+</svg>

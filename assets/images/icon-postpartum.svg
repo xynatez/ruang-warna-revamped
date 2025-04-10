@@ -1,0 +1,22 @@
+<svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-labelledby="postpartumIconTitleRev">
+  <title id="postpartumIconTitleRev">Ikon Postpartum (Revisi)</title>
+  <defs>
+     <linearGradient id="handGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FEF2F2"/> <!-- red-50 -->
+        <stop offset="100%" stop-color="#FFE4E6"/> <!-- rose-100 -->
+    </linearGradient>
+  </defs>
+  <!-- Tangan Kiri (Melindungi) -->
+  <path d="M 48 90 C 10 90, 5 50, 25 30 C 35 15, 48 10, 48 10"
+        fill="url(#handGrad)" stroke="#F43F5E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="dark:fill-slate-700 dark:stroke-rose-400"/>
+  <!-- Tangan Kanan (Melindungi) -->
+  <path d="M 52 90 C 90 90, 95 50, 75 30 C 65 15, 52 10, 52 10"
+        fill="url(#handGrad)" stroke="#F43F5E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="dark:fill-slate-700 dark:stroke-rose-400"/>
+
+  <!-- Tunas Tumbuh -->
+   <g transform="translate(50, 55)">
+    <path d="M 0 20 C 0 10, -10 0, 0 -10 C 10 0, 0 10, 0 20 Z" fill="#6EE7B7"/> <!-- Green-300 -->
+    <path d="M 0 5 C 8 0, 15 5, 15 12" fill="none" stroke="#065F46" stroke-width="4" stroke-linecap="round"/> <!-- Green-800 -->
+    <path d="M 0 5 C -8 0, -15 5, -15 12" fill="none" stroke="#065F46" stroke-width="4" stroke-linecap="round"/> <!-- Green-800 -->
+   </g>
+</svg>

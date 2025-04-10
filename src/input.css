@@ -1,0 +1,56 @@
+/* src/input.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply font-body bg-background-light text-text-main-light dark:bg-background-dark dark:text-text-main-dark transition-colors duration-300 min-h-screen flex flex-col;
+    /* Optional subtle background pattern */
+    @apply bg-grid-pattern-light dark:bg-grid-pattern-dark;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  /* Styling radio button kustom yang lebih baik */
+  input[type="radio"] {
+    @apply appearance-none border border-border-color-light dark:border-border-color-dark rounded-full w-5 h-5 checked:bg-primary checked:border-primary focus:ring-2 focus:ring-primary/50 focus:outline-none transition duration-200 ease-in-out cursor-pointer align-middle;
+  }
+   input[type="radio"]:checked {
+     background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
+     background-size: 100% 100%;
+     background-position: center;
+     background-repeat: no-repeat;
+   }
+   /* Styling label saat radio di sebelahnya checked */
+   input[type="radio"]:checked + label {
+      @apply border-primary bg-primary/5 dark:border-primary-dark dark:bg-primary-dark/10;
+   }
+}
+
+@layer components {
+   /* Tombol Utama */
+  .btn-primary {
+    @apply inline-block bg-primary text-white font-heading font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-primary-hover dark:bg-primary-dark dark:text-background-dark dark:hover:bg-primary-dark_hover transition duration-300 ease-in-out transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-background-dark;
+  }
+  /* Tombol Sekunder */
+  .btn-secondary {
+     @apply inline-block bg-secondary text-white font-heading font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-secondary-hover dark:bg-secondary-dark dark:text-background-dark dark:hover:bg-secondary-dark_hover transition duration-300 ease-in-out transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary dark:focus:ring-offset-background-dark;
+  }
+   /* Tombol Outline */
+   .btn-outline {
+      @apply inline-block bg-transparent border border-primary text-primary font-heading font-semibold py-3 px-6 rounded-lg hover:bg-primary/10 dark:border-primary-dark dark:text-primary-dark dark:hover:bg-primary-dark/10 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-background-dark;
+   }
+   /* Kartu Konten */
+   .content-card {
+      @apply bg-content-bg-light dark:bg-content-bg-dark rounded-xl shadow-lg border border-border-color-light dark:border-border-color-dark;
+   }
+}
+
+/* Styling Scrollbar (Opsional) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { @apply bg-slate-100 dark:bg-slate-800; }
+::-webkit-scrollbar-thumb { @apply bg-slate-300 dark:bg-slate-600 rounded; }
+::-webkit-scrollbar-thumb:hover { @apply bg-slate-400 dark:bg-slate-500; }

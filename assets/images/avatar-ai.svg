@@ -1,0 +1,19 @@
+<svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-labelledby="aiAvatarTitleRev">
+  <title id="aiAvatarTitleRev">Avatar AI (Revisi)</title>
+  <defs>
+    <linearGradient id="aiGradRev" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5EEAD4"/> <!-- Teal-300 -->
+      <stop offset="100%" stop-color="#A78BFA"/> <!-- Violet-400 -->
+    </linearGradient>
+     <filter id="avatarGlow">
+       <feGaussianBlur stdDeviation="2" />
+     </filter>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="url(#aiGradRev)"/>
+  <!-- Simbol Gelombang Suara / Chat -->
+  <g transform="translate(50, 55)">
+    <path d="M -25 0 Q -12.5 -15, 0 0 T 25 0" fill="none" stroke="white" stroke-width="6" stroke-linecap="round"/>
+    <path d="M -15 -15 Q -7.5 -25, 0 -15 T 15 -15" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+     <path d="M -5 -25 Q -2.5 -30, 0 -25 T 5 -25" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+  </g>
+</svg>

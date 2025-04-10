@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bantuan Profesional - Ruang Warna</title>
+     <link href="css/style.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <script defer src="https://unpkg.com/feather-icons"></script>
+    <script defer src="js/main.js"></script>
+    <link rel="icon" href="assets/logo/logo-ruangwarna.svg" type="image/svg+xml">
+</head>
+<body class="font-body bg-background-light text-text-main-light dark:bg-background-dark dark:text-text-main-dark min-h-screen flex flex-col">
+
+    <!-- Header (Sama) -->
+    <header class="py-4 px-4 md:px-8 sticky top-0 z-50 bg-content-bg-light/80 dark:bg-content-bg-dark/80 backdrop-blur-md border-b border-border-color-light dark:border-border-color-dark shadow-sm">
+        <div class="container mx-auto flex justify-between items-center">
+             <a href="index.html" class="flex items-center space-x-2 group">
+                <img src="assets/logo/logo-ruangwarna.svg" alt="Logo Ruang Warna" class="h-9 w-auto transition-transform duration-300 group-hover:scale-110">
+                <span class="font-heading text-xl font-bold text-primary dark:text-primary-dark transition-colors">Ruang Warna</span>
+            </a>
+            <button id="darkModeToggle" aria-label="Toggle Dark Mode" class="p-2 rounded-full text-text-muted-light dark:text-text-muted-dark hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+                <i data-feather="moon" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-16 md:py-24">
+        <div class="text-center mb-12 animate-slide-up">
+            <h1 class="font-heading text-3xl md:text-4xl font-bold mb-4 text-text-main-light dark:text-text-main-dark">Mencari Dukungan Profesional</h1>
+            <p class="text-lg text-text-muted-light dark:text-text-muted-dark max-w-3xl mx-auto">Anda tidak sendirian. Jika Anda merasa membutuhkan bantuan lebih lanjut atau dalam kondisi darurat, jangan ragu menghubungi layanan berikut.</p>
+        </div>
+
+        <!-- Kontak Darurat -->
+         <div class="mb-12 max-w-2xl mx-auto p-6 rounded-lg border-2 border-result-emergency-border_light dark:border-result-emergency-border_dark bg-result-emergency-bg_light dark:bg-result-emergency-bg_dark text-result-emergency-text_light dark:text-result-emergency-text_dark shadow-lg animate-fade-in animation-delay-[100ms]">
+            <h2 class="font-heading text-2xl font-bold mb-4 flex items-center justify-center">
+                <i data-feather="alert-triangle" class="w-7 h-7 mr-3"></i> Butuh Bantuan Segera?
+            </h2>
+            <p class="text-center mb-5">Hubungi kontak darurat di bawah ini:</p>
+            <div class="space-y-3 text-center">
+                 <p class="text-lg">
+                    Layanan Kesehatan Jiwa (SEJIWA): <a href="tel:119" class="font-bold text-xl underline hover:opacity-80">119 ext. 8</a>
+                 </p>
+                  <p class="text-lg">
+                    Call Center Halo Kemenkes: <a href="tel:1500567" class="font-bold text-xl underline hover:opacity-80">1500-567</a>
+                 </p>
+            </div>
+         </div>
+
+        <!-- Daftar Layanan -->
+        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <!-- Card HIMPSI -->
+            <div class="content-card p-6 flex items-start space-x-4 animate-fade-in animation-delay-[300ms]">
+                <div class="mt-1 p-3 bg-primary/10 dark:bg-primary-dark/20 rounded-full text-primary dark:text-primary-dark flex-shrink-0">
+                    <i data-feather="shield" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-heading text-lg font-bold mb-1">HIMPSI Jaya</h3>
+                    <p class="text-sm text-text-muted-light dark:text-text-muted-dark mb-3">Layanan konseling psikologi dari Himpunan Psikologi Indonesia wilayah Jakarta.</p>
+                    <a href="https://himpsijaya.org/" target="_blank" rel="noopener noreferrer" class="text-sm text-primary dark:text-primary-dark hover:underline font-semibold">Kunjungi Situs <i data-feather="external-link" class="w-3 h-3 inline-block ml-1"></i></a>
+                </div>
+            </div>
+
+            <!-- Card Kemenkes -->
+            <div class="content-card p-6 flex items-start space-x-4 animate-fade-in animation-delay-[400ms]">
+                 <div class="mt-1 p-3 bg-secondary/10 dark:bg-secondary-dark/20 rounded-full text-secondary dark:text-secondary-dark flex-shrink-0">
+                    <i data-feather="activity" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-heading text-lg font-bold mb-1">Sehat Jiwa Kemenkes</h3>
+                    <p class="text-sm text-text-muted-light dark:text-text-muted-dark mb-3">Portal informasi dan layanan kesehatan jiwa resmi dari Kementerian Kesehatan RI.</p>
+                     <a href="https://sehatjiwa.kemkes.go.id/" target="_blank" rel="noopener noreferrer" class="text-sm text-primary dark:text-primary-dark hover:underline font-semibold">Kunjungi Situs <i data-feather="external-link" class="w-3 h-3 inline-block ml-1"></i></a>
+                </div>
+            </div>
+
+            <!-- Card Into The Light -->
+            <div class="content-card p-6 flex items-start space-x-4 animate-fade-in animation-delay-[500ms]">
+                 <div class="mt-1 p-3 bg-pink-600/10 dark:bg-pink-400/20 rounded-full text-pink-600 dark:text-pink-400 flex-shrink-0">
+                    <i data-feather="users" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-heading text-lg font-bold mb-1">Into The Light ID</h3>
+                    <p class="text-sm text-text-muted-light dark:text-text-muted-dark mb-3">Komunitas advokasi pencegahan bunuh diri dan dukungan kesehatan mental bagi kaum muda.</p>
+                     <a href="https://www.intothelightid.org/tentang-bunuh-diri/hotline-dkijakarta/" target="_blank" rel="noopener noreferrer" class="text-sm text-primary dark:text-primary-dark hover:underline font-semibold">Lihat Kontak <i data-feather="external-link" class="w-3 h-3 inline-block ml-1"></i></a>
+                </div>
+            </div>
+
+            <!-- Card Direktori (Placeholder) -->
+            <div class="content-card p-6 flex items-start space-x-4 animate-fade-in animation-delay-[600ms]">
+                 <div class="mt-1 p-3 bg-indigo-600/10 dark:bg-indigo-400/20 rounded-full text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                    <i data-feather="map-pin" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-heading text-lg font-bold mb-1">Direktori Lokal</h3>
+                    <p class="text-sm text-text-muted-light dark:text-text-muted-dark mb-3">Cari psikolog atau psikiater di Puskesmas atau Rumah Sakit terdekat di wilayah Anda (gunakan pencarian online).</p>
+                     <a href="https://www.google.com/search?q=psikolog+puskesmas+jakarta+barat" target="_blank" rel="noopener noreferrer" class="text-sm text-primary dark:text-primary-dark hover:underline font-semibold">Cari di Google <i data-feather="external-link" class="w-3 h-3 inline-block ml-1"></i></a>
+                </div>
+            </div>
+
+        </div>
+
+         <!-- Tombol Kembali -->
+         <div class="text-center mt-16">
+             <a href="results.html" class="btn-outline">
+                 <i data-feather="arrow-left" class="inline-block mr-2 w-5 h-5"></i> Kembali ke Hasil
+             </a>
+         </div>
+
+    </main>
+
+    <!-- Footer (Sama) -->
+    <footer class="py-8 px-4 mt-16 border-t border-border-color-light dark:border-border-color-dark bg-background-light dark:bg-background-dark">
+        <div class="container mx-auto text-center text-sm text-text-muted-light dark:text-text-muted-dark">
+            <p class="mb-2">❤️ Mencari bantuan adalah tanda kekuatan, bukan kelemahan.</p>
+            <button id="resetAllButton" class="text-red-600 dark:text-red-400 hover:underline font-medium focus:outline-none focus:ring-1 focus:ring-red-500 rounded">Reset Semua Data Sesi</button>
+             <p class="mt-4 text-xs">&copy; 2025 Ruang Warna.</p>
+        </div>
+    </footer>
+
+     <script>
+       document.addEventListener('DOMContentLoaded', () => {
+         feather.replace({ width: '1em', height: '1em' });
+       });
+     </script>
+</body>
+</html>

@@ -1,290 +1,287 @@
-/* js/chat.js (REVISED - Typing Effect & Enhanced Prompt) */
-document.addEventListener('DOMContentLoaded', () => {
-    // Pastikan dependensi ada
-    if (typeof getResultInterpretation === 'undefined' || typeof resultCategories === 'undefined') {
-         console.error("ChatJS: Dependencies (getResultInterpretation/resultCategories) not loaded!");
-         // Nonaktifkan input atau tampilkan pesan error
-          const messageInput = document.getElementById('messageInput');
-          const chatForm = document.getElementById('chatForm');
-          if(messageInput) messageInput.disabled = true;
-          if(messageInput) messageInput.placeholder = "Gagal memuat komponen chat...";
-          if(chatForm) chatForm.querySelector('button[type="submit"]').disabled = true;
-          // Tampilkan pesan di area sistem
-          const systemMessageElement = document.getElementById('systemMessage');
-           if(systemMessageElement) systemMessageElement.textContent = "Error: Komponen penting tidak dimuat. Chat tidak tersedia.";
-          return; // Hentikan eksekusi
-    }
+/*
+js/chat.js (BERDASARKAN paste.txt [1] + PERBAIKAN SAFARI iOS)
+Handles the AI chat interface, message sending/receiving, and interaction with Gemini API.
+*/
 
+// IMPORTANT: Replace with your actual Gemini API Key or use a secure proxy method
+const GEMINI_API_KEY_CHAT = "AIzaSyDP-3ba4HulshOKZkVzll7bFdGYkcP8bQQ"; // <<< GANTI JIKA PERLU!
+// Menggunakan URL API yang lebih stabil
+const GEMINI_API_URL_CHAT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY_CHAT}`;
+
+document.addEventListener('DOMContentLoaded', () => {
     // --- Elemen DOM ---
     const chatMessagesContainer = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
     const chatForm = document.getElementById('chatForm');
+    const chatFooter = chatForm.closest('footer'); // Dapatkan elemen footer
     const typingIndicator = document.getElementById('typingIndicator');
     const systemMessageElement = document.getElementById('systemMessage');
 
     // --- State ---
-    let chatHistory = []; // Format: { role: 'user'/'model', parts: [{text: '...'}] }
+    let chatHistory = []; // Format Asli: { role: 'user'/'model', text: '...' }
     let isAiTyping = false;
-    let typingAbortController = null; // Untuk membatalkan animasi ketik jika perlu
 
-    // --- Helper ---
-    const getSessionData = window.getSessionData || function(key) { console.warn("ChatJS: getSessionData fallback used"); return null; };
-    const setSessionData = window.setSessionData || function(key, value) { console.warn("ChatJS: setSessionData fallback used"); };
-
-    // --- Initialization ---
-    function initializeChat() {
-        chatHistory = getSessionData('chat_history') || [];
-        if (chatHistory.length === 0) {
-            systemMessageElement.textContent = "Sesi baru dimulai. Riwayat akan hilang jika browser ditutup.";
-            // Tambahkan pesan AI awal tanpa menyimpan & tanpa animasi ketik
-            const initialAIMsg = { role: 'model', parts: [{ text: "Halo! Saya Konselor AI Ruang Warna. Ada yang ingin Anda ceritakan atau diskusikan hari ini?" }] };
-             chatHistory.push(initialAIMsg); // Tambahkan ke array untuk render awal
-             renderSingleMessage(initialAIMsg); // Render pesan ini saja
-             // Jangan simpan pesan awal ini ke session storage agar tidak terduplikasi saat reload
-        } else {
-             systemMessageElement.textContent = "Melanjutkan sesi sebelumnya...";
-             renderAllMessagesFromHistory(); // Render semua history saat load
-        }
-         scrollToBottom(); // Pastikan scroll di bawah saat load
-    }
-
-    // --- Message Rendering ---
-
-    // Fungsi untuk render semua pesan dari history (saat load/refresh)
-    function renderAllMessagesFromHistory() {
-        if (!chatMessagesContainer) return;
-        const messagesHtml = chatHistory.map(message => createMessageHTML(message)).join('');
-        const systemMsgHtml = systemMessageElement ? `<div class="text-center text-xs text-text-muted-light dark:text-text-muted-dark my-4 italic">${systemMessageElement.textContent}</div>` : '';
-        chatMessagesContainer.innerHTML = systemMsgHtml + messagesHtml;
-    }
-
-    // Fungsi untuk membuat HTML satu pesan
-     function createMessageHTML(message) {
-        const textContent = message.parts[0]?.text || '';
-        const isUser = message.role === 'user';
-        return `
-             <div class="message-wrapper flex ${isUser ? 'justify-end' : 'justify-start'} mb-3 animate-fade-in">
-                 <div class="message-bubble max-w-[80%] md:max-w-[70%] p-3 rounded-xl shadow-sm
-                     ${isUser
-                         ? 'bg-primary dark:bg-primary-dark text-white dark:text-background-dark rounded-br-none'
-                         : 'bg-content-bg-light dark:bg-content-bg-dark text-text-main-light dark:text-text-main-dark rounded-bl-none border border-border-color-light dark:border-border-color-dark'
-                     }" data-message-role="${message.role}">
-                     <div class="message-content whitespace-pre-wrap">${textContent.replace(/\n/g, '<br>')}</div>
-                 </div>
-             </div>`;
-    }
-
-    // Fungsi untuk render satu pesan saja (biasanya untuk user atau AI awal)
-    function renderSingleMessage(message) {
-         if (!chatMessagesContainer) return;
-         const messageHtml = createMessageHTML(message);
-         chatMessagesContainer.insertAdjacentHTML('beforeend', messageHtml);
-         scrollToBottom();
-    }
-
-    // Fungsi untuk scroll ke bawah
-    function scrollToBottom() {
-        if(chatMessagesContainer) {
-            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-        }
-    }
-
-
-    // --- Typing Effect ---
-    async function typeEffect(element, text, speed = 35) {
-         // Batalkan animasi ketik sebelumnya jika ada
-         if (typingAbortController) {
-             typingAbortController.abort();
+    // --- Helper Functions (Fallback) ---
+    const getSessionData = window.getSessionData || function(key) {
+        const data = sessionStorage.getItem(key);
+        if (data) { try { return JSON.parse(data); } catch(e) { console.error("Fallback getSessionData error:", e); return null; } }
+        return null;
+    };
+     const getResultInterpretation = window.getResultInterpretation || function(type, score) {
+         console.warn("Fallback getResultInterpretation used in chat.js");
+         // Coba implementasi sederhana jika screening-data.js gagal load
+         // Ini hanya contoh, logika asli ada di screening-data.js
+         if (typeof resultCategories !== 'undefined' && resultCategories[type]) {
+             for (const cat of resultCategories[type]) {
+                 if (score >= cat.range[0] && score <= cat.range[1]) return cat;
+             }
          }
-         typingAbortController = new AbortController();
-         const signal = typingAbortController.signal;
+         return null;
+     };
 
-        element.innerHTML = ''; // Kosongkan elemen target
-        const processedText = text.replace(/<br\s*\/?>/gi, '\n'); // Ganti <br> kembali ke newline untuk proses
-        let index = 0;
+    // --- Initialization (Dari paste.txt [1]) ---
+    function initializeChat() {
+        chatHistory = [];
+        sessionStorage.removeItem('chat_history');
+        renderMessages(); // Render awal
 
-        return new Promise((resolve) => {
-            function typeCharacter() {
-                if (signal.aborted) {
-                     console.log("Typing aborted.");
-                     element.innerHTML = text; // Tampilkan sisa teks jika dibatalkan
-                     scrollToBottom();
-                     resolve(); // Selesaikan promise
-                     return;
-                }
+         if (systemMessageElement) {
+             systemMessageElement.classList.remove('hidden');
+             systemMessageElement.textContent = "Sesi baru dimulai. Riwayat chat akan hilang jika browser ditutup.";
+         }
 
-                if (index < processedText.length) {
-                    const char = processedText[index];
-                    if (char === '\n') {
-                        element.innerHTML += '<br>'; // Tambahkan <br> untuk newline
-                    } else {
-                        element.textContent += char; // Gunakan textContent agar aman dari HTML injection
-                    }
-                    index++;
-                    scrollToBottom();
-                    setTimeout(typeCharacter, speed + (Math.random() * speed * 0.5 - speed * 0.25)); // Tambahkan variasi kecepatan
-                } else {
-                     typingAbortController = null; // Reset controller
-                     resolve(); // Selesai
-                }
-            }
-            typeCharacter(); // Mulai mengetik
-        });
+         const screeningData = getSessionData('screening_results');
+         if (screeningData) {
+              console.log("Screening data found (Base: paste.txt).");
+              // Tambahkan pesan AI awal jika perlu
+              // addMessage('model', "Halo! Saya melihat hasil screening Anda...");
+         } else {
+              console.log("No screening data found (Base: paste.txt).");
+              // Tambahkan pesan AI awal jika perlu
+              addMessage('model', "Halo! Ada yang bisa saya bantu hari ini?");
+         }
+         // Pastikan scroll awal
+         if (chatMessagesContainer) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
     }
 
-    // --- AI Interaction ---
+    // --- Message Handling (Render disesuaikan ke HTML terbaru) ---
+    function addMessage(role, text) {
+        // Role disesuaikan ke format API ('user' atau 'model')
+        const message = { role: role === 'ai' ? 'model' : 'user', text: text.trim() };
+        chatHistory.push(message);
+        // setSessionData('chat_history', chatHistory); // Uncomment jika ingin simpan history sesi ini
+        renderMessages();
+    }
+
+    function renderMessages() {
+        if (!chatMessagesContainer) return;
+
+        // Simpan posisi scroll sebelum render ulang
+        const scrollPos = chatMessagesContainer.scrollTop;
+        const isScrolledToBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.scrollTop - chatMessagesContainer.clientHeight < 1;
+
+
+        // Kosongkan container KECUALI system message
+        const messages = chatMessagesContainer.querySelectorAll('.message-wrapper'); // Target wrapper
+        messages.forEach(msg => msg.remove());
+
+        // Render ulang dari history
+        chatHistory.forEach(message => {
+            const textContent = message.text || '';
+            const isUser = message.role === 'user';
+
+            const wrapper = document.createElement('div');
+             wrapper.classList.add('message-wrapper', 'flex', 'mb-3'); // Struktur wrapper
+             if (isUser) wrapper.classList.add('justify-end');
+             else wrapper.classList.add('justify-start');
+
+            const messageElement = document.createElement('div');
+            messageElement.classList.add(
+                'message-bubble', // Kelas generik
+                'max-w-[80%]', 'md:max-w-[70%]', 'p-3', 'rounded-xl', // Ukuran & bentuk dari HTML terbaru
+                'shadow-sm', 'animate-fade-in' // Efek dasar
+            );
+
+            // Tambahkan kelas warna & alignment sesuai role (dari config TERBARU)
+            if (isUser) {
+                 messageElement.classList.add(
+                     'bg-primary', 'dark:bg-primary-dark',
+                     'text-white', 'dark:text-background-dark',
+                     'rounded-br-none'
+                 );
+            } else { // role === 'model' (AI)
+                 messageElement.classList.add(
+                     'bg-content-bg-light', 'dark:bg-content-bg-dark',
+                     'text-text-main-light', 'dark:text-text-main-dark',
+                     'rounded-bl-none',
+                     'border', 'border-border-color-light', 'dark:border-border-color-dark'
+                 );
+            }
+
+            // Inner div untuk konten (agar whitespace-pre-wrap bekerja)
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('message-content', 'whitespace-pre-wrap');
+            contentDiv.innerHTML = textContent.replace(/\n/g, '<br>'); // Tetap pakai innerHTML untuk <br>
+
+            messageElement.appendChild(contentDiv);
+            wrapper.appendChild(messageElement);
+            chatMessagesContainer.appendChild(wrapper);
+        });
+
+        // Kembalikan posisi scroll atau scroll ke bawah jika sebelumnya sudah di bawah
+        if (isScrolledToBottom) {
+             chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        } else {
+             chatMessagesContainer.scrollTop = scrollPos; // Coba pertahankan posisi scroll
+        }
+
+        // Jika tidak ada pesan, pastikan scroll di atas
+         if (chatHistory.length === 0 && systemMessageElement) {
+              chatMessagesContainer.scrollTop = 0;
+         }
+    }
+
+    // --- AI Interaction (Struktur dari paste.txt [1], API call disesuaikan) ---
     async function sendMessageToAI(userMessageText) {
         if (isAiTyping) return;
 
-        // 1. Tambahkan pesan user ke history & render
-        const userMessage = { role: 'user', parts: [{ text: userMessageText.trim() }] };
-        chatHistory.push(userMessage);
-        setSessionData('chat_history', chatHistory);
-        renderSingleMessage(userMessage);
-
-        // 2. Tampilkan indikator loading AI
+        addMessage('user', userMessageText);
         isAiTyping = true;
         typingIndicator.classList.remove('hidden');
-        scrollToBottom();
+        // Scroll manual setelah indikator muncul
+        if (chatMessagesContainer) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 
-        // 3. Persiapan API Call
-        const apiKey = "AIzaSyDP-3ba4HulshOKZkVzll7bFdGYkcP8bQQ"; // <<< GANTI / GUNAKAN PROXY!
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
-        if (apiKey === "YOUR_GEMINI_API_KEY" || !apiKey) {
-             addMessage('model', "Maaf, koneksi ke AI sedang tidak aktif (API Key belum diatur)."); // Akan di-render tanpa typing
+         if (GEMINI_API_KEY_CHAT === "YOUR_GEMINI_API_KEY" || !GEMINI_API_KEY_CHAT) {
+             console.warn("ChatJS (paste.txt base): API Key not set.");
+             addMessage('model', "Maaf, koneksi AI tidak aktif (Key?).");
              isAiTyping = false;
              typingIndicator.classList.add('hidden');
              return;
-        }
-
-        // 4. Enhanced System Instruction (Prompt Engineering)
-         const screeningData = getSessionData('screening_results');
-         let screeningContext = "[Informasi screening tidak tersedia di sesi ini]";
-         if (screeningData && screeningData.answers) {
-              const interpretation = typeof getResultInterpretation !== 'undefined'
-                                    ? getResultInterpretation(screeningData.screening_type, screeningData.answers)
-                                    : null;
-              screeningContext = `[Konteks Screening Pengguna (jika relevan): Tipe=${screeningData.screening_type || 'N/A'}, Skor=${interpretation?.score ?? 'N/A'}, Kategori=${interpretation?.category ?? 'N/A'}]`;
          }
 
-        const systemInstruction = `
-[CONTEXT]
-Kamu adalah AI Konselor yang hangat dan empatik di platform "Ruang Warna", dirancang untuk memberikan dukungan emosional awal. Bayangkan dirimu sebagai pendengar yang baik, sabar, dan tidak menghakimi.
-${screeningContext}
+        // --- Prepare Context & Instructions (Struktur dari paste.txt [1]) ---
+        const screeningData = getSessionData('screening_results');
+        let screeningContext = "[Riwayat screening tdk tersedia]";
+        if (screeningData && screeningData.answers) {
+             try {
+                 // Kalkulasi skor (pastikan reduce aman)
+                 const score = screeningData.answers.reduce((sum, answer) => sum + (answer === null ? 0 : Number(answer) || 0), 0);
+                 // Dapatkan interpretasi (gunakan fallback jika perlu)
+                 const interpretation = getResultInterpretation(screeningData.screening_type, score);
+                 screeningContext = `[Konteks: Tipe=${screeningData.screening_type || 'N/A'}, Skor=${score}, Kategori=${interpretation?.category || 'N/A'}]`;
+             } catch(e) {
+                 console.error("Error processing screening context:", e);
+                 screeningContext = "[Gagal proses screening context]";
+             }
+        }
 
-[INSTRUCTION UTAMA]
-1.  **Respons Inti:** Tanggapi pesan terakhir pengguna (role 'user') dengan penuh perhatian, kehangatan, dan pengertian mendalam. Gunakan Bahasa Indonesia yang natural dan mengalir.
-2.  **Empati & Validasi:** Validasi perasaan atau pengalaman yang diungkapkan pengguna secara tulus. Tunjukkan bahwa Anda memahami perspektif mereka. Gunakan frasa seperti: "Saya bisa membayangkan betapa sulitnya itu...", "Sangat wajar jika Anda merasa...", "Terima kasih telah mempercayai saya dengan cerita ini...".
-3.  **Adaptasi Gaya Bahasa:** Cermati gaya bahasa pengguna (misal: formal, santai, penggunaan kata sapaan). Sesuaikan respons Anda agar terasa *nyambung* dan nyaman, namun **selalu pertahankan nada profesional, suportif, penuh hormat, dan etis**. Jangan menggunakan bahasa gaul yang berlebihan atau tidak pantas.
-4.  **Kreativitas & Nuansa:** Hindari respons template atau terdengar kaku/robotik. Berikan jawaban yang terasa otentik dan manusiawi. Gunakan variasi kalimat dan tunjukkan kepribadian yang peduli.
-5.  **Fokus:** Fokus pada refleksi, validasi emosi, dan dukungan. Jika pengguna meminta saran, tawarkan saran self-care yang umum dan ringan (misal: teknik pernapasan, journaling, aktivitas menyenangkan) atau ajak mereka berefleksi ("Bagaimana perasaan Anda jika mencoba...?").
-6.  **Batasan Tegas:** **JANGAN PERNAH** memberikan diagnosis medis/psikologis, label klinis, atau nasihat medis/terapi spesifik. Tegaskan bahwa Anda BUKAN pengganti profesional berlisensi jika percakapan mengarah ke sana.
-7.  **Penanganan Krisis:** Jika pengguna mengungkapkan pikiran eksplisit untuk menyakiti diri sendiri/orang lain, bunuh diri, atau sedang dalam krisis akut yang membahayakan, **prioritaskan keselamatan**. Jangan mencoba menangani krisis. **SEGERA, dengan tenang dan jelas**, sarankan mereka untuk menghubungi layanan darurat (misal: **119 ext. 8** untuk Indonesia) atau mencari bantuan profesional darurat (UGD, psikolog/psikiater). Contoh: "Saya mendengar Anda sedang dalam kesulitan besar dan mengkhawatirkan keselamatan Anda. Sangat penting untuk mendapatkan bantuan segera. Anda bisa menghubungi 119 ext. 8 atau pergi ke UGD terdekat."
-8.  **Ringkas & Jelas:** Jaga respons agar tetap ringkas dan mudah dicerna (target 2-4 paragraf pendek), hindari jargon teknis.
-9.  **Peran:** Selalu berperan sebagai 'model'.`;
+        // Gabungkan instruksi dan history untuk format API 'contents'
+         const historyForAPI = chatHistory.slice(-5); // Ambil 5 terakhir (termasuk user)
+         const promptInstructions = `[INSTRUKSI AI] Kamu AI Konselor Ruang Warna. ${screeningContext}. Respons pesan terakhir 'user' dg hangat, empatik (Bahasa Indonesia). JANGAN diagnosis. Jika darurat >> 119. Peran: 'model'.`;
 
-        // 5. Persiapan History untuk API
-        const historyForAPI = chatHistory.slice(-8); // Kirim lebih banyak history untuk konteks adaptasi
+         const contents = [];
+         // Add history
+         historyForAPI.forEach((msg, index) => {
+              if (index === historyForAPI.length - 1) { // Pesan user terakhir
+                   // Sisipkan instruksi sebelum pesan user terakhir (metode paste.txt)
+                   contents.push({ role: 'model', parts: [{ text: promptInstructions }] });
+                   contents.push({ role: msg.role, parts: [{ text: msg.text }] });
+               } else {
+                   contents.push({ role: msg.role, parts: [{ text: msg.text }] });
+               }
+          });
+          // Handle jika history kosong atau hanya ada user pertama
+           if (historyForAPI.length <= 1 && historyForAPI[0]?.role === 'user') {
+                contents.unshift({ role: 'model', parts: [{ text: promptInstructions }] });
+           }
 
-        console.log("ChatJS: Sending to Gemini - History Slice:", JSON.stringify(historyForAPI.map(m=>m.role))); // Log roles saja
-        console.log("ChatJS: Sending System Instruction separately.");
 
-        let aiResponseText = "Maaf, terjadi kendala. Silakan coba lagi."; // Default error text
+          console.log("ChatJS (paste.txt base): Sending Contents Roles:", JSON.stringify(contents.map(c=>c.role)));
+
+        let aiResponseText = "Maaf, saya tidak bisa merespons saat ini.";
 
         try {
-            // 6. API Call
-            const response = await fetch(apiUrl, {
+             const response = await fetch(GEMINI_API_URL_CHAT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: historyForAPI,
-                    systemInstruction: { parts: [{ text: systemInstruction }] },
-                    safetySettings: [ /* ... safety settings seperti sebelumnya ... */ ],
-                    generationConfig: { temperature: 0.8, maxOutputTokens: 500 } // Temp sedikit naik
+                    contents: contents, // Kirim history+instruksi gabungan
+                    // safetySettings & generationConfig bisa ditambahkan jika perlu
+                    safetySettings: [ { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" }, /* ...lainnya... */ ],
+                    generationConfig: { temperature: 0.7, maxOutputTokens: 400 }
                 })
             });
 
-            // 7. Parsing Respons (dengan logging mentah)
+            // Parsing & Error Handling
             const responseDataText = await response.text();
-            console.log("ChatJS: Raw API Response Status:", response.status);
-            // console.log("ChatJS: Raw API Response Body:", responseDataText); // Aktifkan jika perlu debug detail
+            console.log("ChatJS (paste.txt base): Raw API Status:", response.status);
+            // console.log("ChatJS (paste.txt base): Raw API Body:", responseDataText);
 
             if (!response.ok) {
-                // ... (Error handling seperti sebelumnya, throw error) ...
                  let errorData = null; try { errorData = JSON.parse(responseDataText); } catch (e) {}
-                 console.error("ChatJS: AI API Error Details:", errorData);
+                 console.error("ChatJS (paste.txt base): API Error:", errorData);
                  let errorMsg = `API Error (${response.status})`;
-                 if (errorData?.promptFeedback?.blockReason) errorMsg = `Permintaan diblokir: ${errorData.promptFeedback.blockReason}`;
+                 if (errorData?.promptFeedback?.blockReason) errorMsg = `Diblokir: ${errorData.promptFeedback.blockReason}`;
                  else if (errorData?.error?.message) errorMsg += `: ${errorData.error.message}`;
                  throw new Error(errorMsg);
             }
 
-            let data = null; try { data = JSON.parse(responseDataText); } catch (e) { throw new Error("Gagal memproses respons JSON dari AI."); }
+            let data = null; try { data = JSON.parse(responseDataText); } catch (e) { throw new Error("Gagal proses respons JSON."); }
 
-            // 8. Ekstrak Teks Respons AI
+             // Ekstrak Teks
              if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
                   aiResponseText = data.candidates[0].content.parts[0].text;
              } else if (data.promptFeedback?.blockReason) {
-                  aiResponseText = `Saya tidak dapat merespons topik tersebut karena alasan keamanan (${data.promptFeedback.blockReason}).`;
+                 aiResponseText = `Tidak bisa respons (${data.promptFeedback.blockReason}).`;
              } else {
-                  console.warn("ChatJS: Unexpected API response structure (No candidates):", data);
-                  aiResponseText = "Hmmm, sepertinya saya sedikit bingung. Bisa coba ulangi atau sampaikan dengan cara lain?";
+                  console.warn("ChatJS (paste.txt base): No candidates found:", data);
+                  aiResponseText = "Hmmm, coba lagi?";
              }
+
+            // Add AI message
+            addMessage('model', aiResponseText);
 
         } catch (error) {
-            console.error("ChatJS: Error sending/processing AI message:", error);
-            aiResponseText = `Maaf, terjadi kesalahan teknis saat berkomunikasi dengan AI (${error.message}).`;
+            console.error("ChatJS (paste.txt base): Error in sendMessageToAI:", error);
+            addMessage('model', `Error: ${error.message}`);
         } finally {
-            // 9. Sembunyikan Indikator Loading
-             typingIndicator.classList.add('hidden');
-
-            // 10. Tambahkan Respons AI ke History (PENTING: Setelah try...catch...finally)
-            const aiMessage = { role: 'model', parts: [{ text: aiResponseText.trim() }] };
-            chatHistory.push(aiMessage);
-            setSessionData('chat_history', chatHistory);
-
-             // 11. Buat Bubble Kosong & Mulai Animasi Ketik
-             const aiBubbleWrapper = document.createElement('div');
-             aiBubbleWrapper.innerHTML = createMessageHTML(aiMessage); // Buat HTML lengkapnya
-             const aiBubbleContentElement = aiBubbleWrapper.querySelector('.message-content'); // Dapatkan elemen kontennya
-
-             if (aiBubbleContentElement) {
-                 chatMessagesContainer.appendChild(aiBubbleWrapper.firstElementChild); // Tambahkan wrapper ke DOM
-                 scrollToBottom();
-                 await typeEffect(aiBubbleContentElement, aiResponseText.replace(/\n/g, '<br>'), 35); // Jalankan animasi ketik
-             } else {
-                 // Fallback jika elemen tidak ditemukan (seharusnya tidak terjadi)
-                 renderSingleMessage(aiMessage);
-             }
-
-             // 12. Izinkan input user lagi SETELAH animasi selesai
-             isAiTyping = false;
-             messageInput.focus(); // Fokus kembali ke input
+            isAiTyping = false;
+            typingIndicator.classList.add('hidden');
         }
     }
 
     // --- Event Listeners ---
+    // Submit Form (Dari paste.txt [1])
     chatForm.addEventListener('submit', (event) => {
         event.preventDefault();
         const messageText = messageInput.value.trim();
         if (messageText && !isAiTyping) {
-             // Batalkan animasi ketik sebelumnya jika user kirim pesan baru
-             if (typingAbortController) {
-                 typingAbortController.abort();
-             }
             sendMessageToAI(messageText);
             messageInput.value = '';
         }
     });
 
-     // Handle jika user mengetik saat AI sedang mengetik (opsional: batalkan ketikan AI)
-     messageInput.addEventListener('input', () => {
-         // if (isAiTyping && typingAbortController) {
-         //     typingAbortController.abort(); // Batalkan ketikan AI jika user mulai mengetik
-         // }
-     });
+    // ===== PERBAIKAN SAFARI iOS (DITERAPKAN DI SINI) =====
+    if (messageInput && chatFooter) {
+        messageInput.addEventListener('focus', () => {
+            console.log("Input focused, scrolling footer into view (paste.txt base)...");
+            // Beri delay agar keyboard muncul
+            setTimeout(() => {
+                chatFooter.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                // Scroll chat messages ke bawah setelahnya
+                setTimeout(() => {
+                     if (chatMessagesContainer) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                }, 150);
+            }, 100);
+        });
+    } else {
+        console.error("ChatJS (paste.txt base): messageInput or chatFooter not found for iOS fix.");
+    }
+    // ===== AKHIR PERBAIKAN =====
+
 
     // --- Initial Load ---
     initializeChat();
+
 });

@@ -2,6 +2,7 @@
 <html lang="id" class="">
 <head>
     <meta charset="UTF-8">
+    {/* Kembali ke viewport standar tanpa viewport-fit=cover */}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Konselor AI - Ruang Warna</title>
     <link href="css/style.css" rel="stylesheet">
@@ -14,8 +15,7 @@
     <script defer src="js/chat.js"></script> <!-- Muat chat.js terakhir -->
     <link rel="icon" href="assets/logo/logo-ruangwarna.svg" type="image/svg+xml">
     <style>
-        /* Custom scrollbar styling sudah ada di input.css */
-        /* Typing indicator styling */
+        /* Styling typing indicator (tetap sama) */
         .typing-indicator span {
             height: 8px; width: 8px; margin: 0 2px;
             @apply bg-primary dark:bg-primary-dark rounded-full inline-block;
@@ -24,41 +24,42 @@
         .typing-indicator span:nth-child(1) { animation-delay: 0s; }
         .typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
         .typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+
+        /* Styling scrollbar kustom dari input.css akan berlaku di #chatMessages */
     </style>
 </head>
-<body class="font-body bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark h-screen flex flex-col overflow-hidden">
+{/* KEMBALI KE h-screen, flex flex-col, overflow-hidden tetap penting */}
+<body class="font-body bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark h-screen flex flex-col overflow-hidden selection:bg-primary/20 dark:selection:bg-primary-dark/30">
 
-    <!-- Header Chat -->
+    <!-- Header Chat (TETAP SAMA) -->
      <header class="bg-content-bg-light dark:bg-content-bg-dark shadow-md py-3 px-4 flex justify-between items-center flex-shrink-0 border-b border-border-color-light dark:border-border-color-dark">
-         <!-- Tombol Kembali -->
-         <a href="results.html" class="p-2 rounded-full text-text-muted-light dark:text-text-muted-dark hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+         <a href="results.html" class="p-2 rounded-full text-text-muted-light dark:text-text-muted-dark hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark" aria-label="Kembali ke Hasil">
              <i data-feather="arrow-left" class="w-6 h-6"></i>
          </a>
-         <!-- Info AI -->
-         <div class="flex items-center space-x-3">
-             <img src="assets/images/avatar-ai.svg" alt="Avatar Konselor AI" class="h-10 w-10 rounded-full border-2 border-primary dark:border-primary-dark">
-             <div>
-                <h1 class="font-heading text-base font-semibold text-text-main-light dark:text-text-main-dark leading-tight">Konselor AI Ruang Warna</h1>
-                <p class="text-xs text-green-600 dark:text-green-400 font-medium flex items-center"><span class="w-2 h-2 bg-green-500 rounded-full mr-1.5"></span>Online</p>
+         <div class="flex items-center space-x-3 overflow-hidden">
+             <img src="assets/images/avatar-ai.svg" alt="Avatar Konselor AI" class="h-10 w-10 rounded-full border-2 border-primary dark:border-primary-dark flex-shrink-0">
+             <div class="truncate">
+                <h1 class="font-heading text-base font-semibold text-text-main-light dark:text-text-main-dark leading-tight truncate">Konselor AI Ruang Warna</h1>
+                <p class="text-xs text-green-600 dark:text-green-400 font-medium flex items-center"><span class="w-2 h-2 bg-green-500 rounded-full mr-1.5 flex-shrink-0"></span>Online</p>
              </div>
          </div>
-          <!-- Tombol Dark Mode -->
-          <button id="darkModeToggle" aria-label="Toggle Dark Mode" class="p-2 rounded-full text-text-muted-light dark:text-text-muted-dark hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+          <button id="darkModeToggle" aria-label="Toggle Dark Mode" class="p-2 rounded-full text-text-muted-light dark:text-text-muted-dark hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark focus:ring-offset-1 dark:focus:ring-offset-background-dark">
                <i data-feather="moon" class="w-5 h-5"></i>
            </button>
      </header>
 
     <!-- Chat Area -->
-    <main id="chatMessages" class="flex-grow overflow-y-auto p-4 space-y-3 bg-grid-pattern-light dark:bg-grid-pattern-dark">
-        <!-- System Message (placeholder, diisi JS) -->
+    {/* flex-grow dan overflow-y-auto adalah kunci scrollbar di sini */}
+    <main id="chatMessages" class="flex-grow overflow-y-auto p-4 space-y-3 bg-subtle-gradient dark:bg-subtle-gradient-dark">
+        {/* System Message (placeholder, diisi JS) */}
          <div id="systemMessage" class="text-center text-xs text-text-muted-light dark:text-text-muted-dark my-4 italic">
              Memulai sesi chat...
          </div>
-         <!-- Chat messages akan di-append di sini oleh JS -->
+         {/* Chat messages akan di-append di sini oleh JS */}
     </main>
 
-     <!-- Typing Indicator -->
-     <div id="typingIndicator" class="px-4 py-2 hidden flex-shrink-0">
+     <!-- Typing Indicator (TETAP SAMA) -->
+     <div id="typingIndicator" class="px-4 py-2 hidden flex-shrink-0 bg-background-light dark:bg-background-dark">
          <div class="flex items-center space-x-2">
               <img src="assets/images/avatar-ai.svg" alt="Avatar AI" class="h-7 w-7 rounded-full">
               <div class="bg-content-bg-light dark:bg-content-bg-dark rounded-lg px-4 py-2 shadow typing-indicator">
@@ -68,22 +69,25 @@
      </div>
 
     <!-- Input Area -->
+    {/* KEMBALIKAN padding normal, hapus calc() dan env() */}
     <footer class="bg-content-bg-light dark:bg-content-bg-dark p-3 md:p-4 shadow-inner border-t border-border-color-light dark:border-border-color-dark flex-shrink-0">
         <form id="chatForm" class="flex items-center space-x-3">
-            <input type="text" id="messageInput" placeholder="Ketik pesan Anda..." class="flex-grow p-3 border border-border-color-light dark:border-border-color-dark rounded-full focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 dark:text-text-main-dark text-base" autocomplete="off">
+            <input type="text" id="messageInput" placeholder="Ketik pesan Anda..." class="flex-grow p-3 border border-border-color-light dark:border-border-color-dark rounded-full focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 dark:text-text-main-dark text-base transition duration-200" autocomplete="off">
             <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-white p-3 rounded-full transition duration-300 flex-shrink-0 shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-background-dark" aria-label="Kirim Pesan">
                 <i data-feather="send" class="w-5 h-5"></i>
             </button>
         </form>
-         <!-- Tombol Reset Sesi di footer chat (opsional) -->
-        <!-- <div class="text-center mt-2">
-            <button id="resetAllButton" class="text-xs text-red-600 dark:text-red-400 hover:underline">Reset Sesi</button>
-        </div> -->
     </footer>
 
+     <!-- Script Feather Init -->
      <script>
        document.addEventListener('DOMContentLoaded', () => {
-         feather.replace({ width: '1em', height: '1em' });
+         try {
+            feather.replace({ width: '1em', height: '1em', 'stroke-width': 2 });
+            console.log("Feather icons replaced on chat.html.");
+        } catch (error) {
+            console.error("Error replacing Feather icons on chat.html:", error);
+        }
        });
      </script>
 </body>

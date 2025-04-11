@@ -2616,3 +2616,29 @@ input[type="radio"]:checked + label:is(.dark *) {
     line-height: 1;
   }
 }
+
+/* Tambahkan di style.css atau inline style */
+@media (max-width: 767px) {
+    body {
+        height: 100vh;
+        height: -webkit-fill-available;
+        overflow: hidden;
+    }
+    
+    #chatMessages {
+        padding-bottom: 20px;
+    }
+    
+    /* Pastikan footer tidak fixed pada mobile */
+    footer {
+        position: relative;
+        bottom: auto;
+        width: auto;
+    }
+}
+
+/* Fix untuk iOS Safari */
+html {
+    height: -webkit-fill-available;
+}
+

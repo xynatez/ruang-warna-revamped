@@ -1,4 +1,4 @@
-/* js/chat.js (REVISED - Visual Viewport API & Enhanced Prompt - FIXED KEYBOARD SCROLL - ATTEMPT 2) */
+/* js/chat.js (REVISED - Visual Viewport API & Enhanced Prompt - FIXED KEYBOARD SCROLL - FINAL VERSION) */
 document.addEventListener('DOMContentLoaded', () => {
     // Pastikan dependensi ada
     if (typeof getResultInterpretation === 'undefined' || typeof resultCategories === 'undefined') {
@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const typingIndicator = document.getElementById('typingIndicator');
     const systemMessageElement = document.getElementById('systemMessage');
     const bodyElement = document.body;
+    const chatContainer = document.getElementById('chat-container');
 
     // --- State ---
     let chatHistory = []; // Format: { role: 'user'/'model', parts: [{text: '...'}] }
@@ -247,9 +248,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const keyboardHeight = window.innerHeight - window.visualViewport.height;
 
         if (keyboardHeight > 50) {
-            bodyElement.style.paddingBottom = `${Math.max(0, keyboardHeight)}px`;
+            chatContainer.style.paddingBottom = `${Math.max(0, keyboardHeight)}px`;
         } else {
-            bodyElement.style.paddingBottom = '0px';
+            chatContainer.style.paddingBottom = '0px';
         }
 
         scrollToBottom('auto');
@@ -288,6 +289,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 250);
         });
     }
+
+    // --- Cleanup pada unload ---
+    window.addEventListener('beforeunload', () => {
+        chatContainer.style.paddingBottom = '0px';
+    });
 
     // --- Initial Load ---
     initializeChat();

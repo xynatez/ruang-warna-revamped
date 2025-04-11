@@ -2617,28 +2617,45 @@ input[type="radio"]:checked + label:is(.dark *) {
   }
 }
 
-/* Tambahkan di style.css atau inline style */
+/* Tambahkan di style.css */
+
+/* Fix untuk iOS Safari - tetap berlaku global */
+html {
+    height: -webkit-fill-available;
+}
+
+/* Styling khusus untuk halaman chat */
+.chat-page {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Media query khusus untuk halaman chat pada mobile */
 @media (max-width: 767px) {
-    body {
+    .chat-page {
         height: 100vh;
         height: -webkit-fill-available;
         overflow: hidden;
     }
     
-    #chatMessages {
+    .chat-page #chatMessages {
         padding-bottom: 20px;
     }
     
-    /* Pastikan footer tidak fixed pada mobile */
-    footer {
+    /* Pastikan footer tidak fixed pada mobile di halaman chat */
+    .chat-page footer {
         position: relative;
         bottom: auto;
         width: auto;
     }
+    
+    /* Pastikan chat container menangani overflow dengan benar */
+    #chat-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
 }
-
-/* Fix untuk iOS Safari */
-html {
-    height: -webkit-fill-available;
-}
-

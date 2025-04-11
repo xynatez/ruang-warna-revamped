@@ -2,19 +2,18 @@
 <html lang="id" class="">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Konselor AI - Ruang Warna</title>
     <link href="css/style.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
     <script defer src="https://unpkg.com/feather-icons"></script>
-    <script defer src="js/main.js"></script> <!-- Muat main.js dulu -->
-    <script defer src="js/screening-data.js"></script> <!-- Muat data untuk context -->
-    <script defer src="js/chat.js"></script> <!-- Muat chat.js terakhir -->
+    <script defer src="js/main.js"></script> <!-- Load main.js first -->
+    <script defer src="js/screening-data.js"></script> <!-- Load data for context -->
+    <script defer src="js/chat.js"></script> <!-- Load chat.js last -->
     <link rel="icon" href="assets/logo/logo-ruangwarna.svg" type="image/svg+xml">
     <style>
-        /* Custom scrollbar styling sudah ada di input.css */
         /* Typing indicator styling */
         .typing-indicator span {
             height: 8px; width: 8px; margin: 0 2px;
@@ -30,11 +29,11 @@
 
     <!-- Header Chat -->
      <header class="bg-content-bg-light dark:bg-content-bg-dark shadow-md py-3 px-4 flex justify-between items-center flex-shrink-0 border-b border-border-color-light dark:border-border-color-dark">
-         <!-- Tombol Kembali -->
+         <!-- Back Button -->
          <a href="results.html" class="p-2 rounded-full text-text-muted-light dark:text-text-muted-dark hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
              <i data-feather="arrow-left" class="w-6 h-6"></i>
          </a>
-         <!-- Info AI -->
+         <!-- AI Info -->
          <div class="flex items-center space-x-3">
              <img src="assets/images/avatar-ai.svg" alt="Avatar Konselor AI" class="h-10 w-10 rounded-full border-2 border-primary dark:border-primary-dark">
              <div>
@@ -42,7 +41,7 @@
                 <p class="text-xs text-green-600 dark:text-green-400 font-medium flex items-center"><span class="w-2 h-2 bg-green-500 rounded-full mr-1.5"></span>Online</p>
              </div>
          </div>
-          <!-- Tombol Dark Mode -->
+          <!-- Dark Mode Toggle -->
           <button id="darkModeToggle" aria-label="Toggle Dark Mode" class="p-2 rounded-full text-text-muted-light dark:text-text-muted-dark hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
                <i data-feather="moon" class="w-5 h-5"></i>
            </button>
@@ -54,7 +53,7 @@
          <div id="systemMessage" class="text-center text-xs text-text-muted-light dark:text-text-muted-dark my-4 italic">
              Memulai sesi chat...
          </div>
-         <!-- Chat messages akan di-append di sini oleh JS -->
+         <!-- Chat messages will be appended here by JS -->
     </main>
 
      <!-- Typing Indicator -->
@@ -68,19 +67,17 @@
      </div>
 
     <!-- Input Area -->
-    <footer class="bg-content-bg-light dark:bg-content-bg-dark p-3 md:p-4 shadow-inner border-t border-border-color-light dark:border-border-color-dark flex-shrink-0">
+    <footer class="bg-content-bg-light dark:bg-content-bg-dark p-3 md:p-4 shadow-inner border-t border-border-color-light dark:border-border-color-dark flex-shrink-0 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-4"> 
+        <!-- Padding bawah untuk area aman iOS -->
         <form id="chatForm" class="flex items-center space-x-3">
-            <input type="text" id="messageInput" placeholder="Ketik pesan Anda..." class="flex-grow p-3 border border-border-color-light dark:border-border-color-dark rounded-full focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 dark:text-text-main-dark text-base" autocomplete="off">
+            <input type="text" id="messageInput" placeholder="Ketik pesan Anda..." class="flex-grow p-3 border border-border-color-light dark:border-border-color-dark rounded-full focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 dark:text-text-main-dark text-base transition duration-200" autocomplete="off">
             <button type="submit" class="bg-primary hover:bg-primary-hover dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-white p-3 rounded-full transition duration-300 flex-shrink-0 shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-background-dark" aria-label="Kirim Pesan">
                 <i data-feather="send" class="w-5 h-5"></i>
             </button>
         </form>
-         <!-- Tombol Reset Sesi di footer chat (opsional) -->
-        <!-- <div class="text-center mt-2">
-            <button id="resetAllButton" class="text-xs text-red-600 dark:text-red-400 hover:underline">Reset Sesi</button>
-        </div> -->
     </footer>
 
+     <!-- Script Feather Init -->
      <script>
        document.addEventListener('DOMContentLoaded', () => {
          feather.replace({ width: '1em', height: '1em' });

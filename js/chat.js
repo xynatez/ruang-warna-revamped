@@ -1,4 +1,4 @@
-/* js/chat.js (REVISED - Visual Viewport API & Enhanced Prompt - FIXED KEYBOARD SCROLL - FINAL VERSION) */
+/* js/chat.js (REVISED - Cross-Platform Scrolling Fix - FINAL VERSION) */
 document.addEventListener('DOMContentLoaded', () => {
     // Pastikan dependensi ada
     if (typeof getResultInterpretation === 'undefined' || typeof resultCategories === 'undefined') {
@@ -22,11 +22,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const bodyElement = document.body;
     const chatContainer = document.getElementById('chat-container');
 
+    // --- Platform Detection ---
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isMobile = isIOS || isAndroid;
+    const isDesktop = !isMobile;
+
     // --- State ---
     let chatHistory = []; // Format: { role: 'user'/'model', parts: [{text: '...'}] }
     let isAiTyping = false;
     let typingAbortController = null; // Untuk membatalkan animasi ketik jika perlu
     let userScrolled = false;
+    let scrollObserver = null;
 
     // --- Helper ---
     const getSessionData = window.getSessionData || function(key) { console.warn("ChatJS: getSessionData fallback used"); return null; };
@@ -39,22 +46,28 @@ document.addEventListener('DOMContentLoaded', () => {
             systemMessageElement.textContent = "Sesi baru dimulai. Riwayat akan hilang jika browser ditutup.";
             const initialAIMsg = { role: 'model', parts: [{ text: "Halo! Saya Konselor AI Ruang Warna. Ada yang ingin Anda ceritakan atau diskusikan hari ini?" }] };
             chatHistory.push(initialAIMsg);
-            renderSingleMessage(initialAIMsg); // Render pesan ini saja
+            renderSingleMessage(initialAIMsg);
         } else {
             systemMessageElement.textContent = "Melanjutkan sesi sebelumnya...";
-            renderAllMessagesFromHistory(); // Render semua history saat load
+            renderAllMessagesFromHistory();
         }
+        
         setupScrollObserver();
         setupScrollHandlers();
-        adjustLayoutForKeyboard();
-        scrollToBottom('force'); // Scroll awal dengan force
+        
+        if (isMobile) {
+            setupMobileKeyboardHandlers();
+        } else {
+            setupDesktopScrollHandlers();
+        }
+        
+        scrollToBottom('force');
     }
 
     // --- Message Rendering ---
     function renderAllMessagesFromHistory() {
         if (!chatMessagesContainer) return;
         const messagesHtml = chatHistory.map(message => createMessageHTML(message)).join('');
-        // Ambil teks system message yang sudah ada di HTML saat init, atau default
         const currentSystemText = systemMessageElement ? systemMessageElement.textContent : "Memulai sesi chat...";
         const systemMsgHtml = `<div class="text-center text-xs text-text-muted-light dark:text-text-muted-dark my-4 italic">${currentSystemText}</div>`;
         chatMessagesContainer.innerHTML = systemMsgHtml + messagesHtml;
@@ -79,57 +92,70 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!chatMessagesContainer) return;
         const messageHtml = createMessageHTML(message);
         chatMessagesContainer.insertAdjacentHTML('beforeend', messageHtml);
-        scrollToBottom('force'); // Gunakan force untuk memastikan scroll terjadi
+        scrollToBottom('force');
     }
 
     // --- Scroll Logic ---
     function scrollToBottom(behavior = 'smooth') {
-        if(chatMessagesContainer) {
-            // Beri sedikit waktu agar render selesai & layout terupdate
-            setTimeout(() => {
-                // Jika user tidak sedang scroll manual atau ini dipanggil dengan 'force'
-                if (!userScrolled || behavior === 'force') {
+        if (!chatMessagesContainer) return;
+        
+        // Gunakan requestAnimationFrame untuk memastikan scroll terjadi setelah render
+        requestAnimationFrame(() => {
+            // Jika user tidak sedang scroll manual atau ini dipanggil dengan 'force'
+            if (!userScrolled || behavior === 'force') {
+                // Untuk desktop, gunakan scrollTo dengan behavior
+                if (isDesktop) {
+                    chatMessagesContainer.scrollTo({
+                        top: chatMessagesContainer.scrollHeight,
+                        behavior: behavior === 'force' ? 'auto' : behavior
+                    });
+                } else {
+                    // Untuk mobile, gunakan scrollTop langsung untuk performa lebih baik
                     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-                    
-                    // Double-check scroll position setelah render
-                    setTimeout(() => {
-                        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-                    }, 100);
                 }
-            }, 100); // Tingkatkan delay
-        }
+                
+                // Double-check scroll position setelah render
+                setTimeout(() => {
+                    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                }, 100);
+            }
+        });
     }
 
     function setupScrollObserver() {
-        // Gunakan MutationObserver untuk memantau perubahan pada container chat
-        const observer = new MutationObserver((mutations) => {
-            // Cek apakah ada penambahan node (pesan baru)
+        // Bersihkan observer sebelumnya jika ada
+        if (scrollObserver) {
+            scrollObserver.disconnect();
+        }
+        
+        // Buat observer baru untuk memantau perubahan konten
+        scrollObserver = new MutationObserver((mutations) => {
             const hasNewMessages = mutations.some(mutation => 
                 mutation.type === 'childList' && mutation.addedNodes.length > 0);
             
             if (hasNewMessages) {
-                scrollToBottom('force'); // Gunakan 'force' untuk memastikan scroll terjadi
+                scrollToBottom('force');
             }
         });
         
         // Mulai observasi
-        observer.observe(chatMessagesContainer, { 
+        scrollObserver.observe(chatMessagesContainer, { 
             childList: true, 
             subtree: true 
         });
     }
 
     function setupScrollHandlers() {
-        // Tambahkan event listener untuk mendeteksi scroll manual user
+        // Deteksi scroll manual user
         chatMessagesContainer.addEventListener('scroll', () => {
-            // Deteksi apakah user scroll ke atas
-            const isAtBottom = Math.abs(
+            // Hitung jarak dari bawah
+            const distanceFromBottom = 
                 chatMessagesContainer.scrollHeight - 
                 chatMessagesContainer.clientHeight - 
-                chatMessagesContainer.scrollTop
-            ) < 50;
+                chatMessagesContainer.scrollTop;
             
-            userScrolled = !isAtBottom;
+            // Jika jarak dari bawah kurang dari 100px, anggap user di bawah
+            userScrolled = distanceFromBottom > 100;
         });
         
         // Reset userScrolled saat user klik input
@@ -137,13 +163,79 @@ document.addEventListener('DOMContentLoaded', () => {
             userScrolled = false;
             scrollToBottom();
         });
+    }
 
-        // Scroll ke bawah saat window resize pada desktop
+    function setupDesktopScrollHandlers() {
+        // Untuk desktop: scroll ke bawah saat window resize
         window.addEventListener('resize', () => {
-            // Hanya scroll jika ini adalah desktop (bukan karena keyboard mobile)
-            if (window.innerWidth > 768) { // Asumsi lebar desktop > 768px
+            if (isDesktop) {
                 scrollToBottom();
             }
+        });
+        
+        // Untuk desktop: gunakan ResizeObserver untuk mendeteksi perubahan ukuran container
+        if (window.ResizeObserver) {
+            const resizeObserver = new ResizeObserver(() => {
+                if (isDesktop) {
+                    scrollToBottom();
+                }
+            });
+            resizeObserver.observe(chatMessagesContainer);
+        }
+    }
+
+    function setupMobileKeyboardHandlers() {
+        if (!window.visualViewport) {
+            console.warn("Visual Viewport API not supported. Keyboard adjustment might not be automatic.");
+            setupMobileKeyboardFallback();
+            return;
+        }
+
+        console.log("Visual Viewport API supported. Enabling automatic keyboard adjustment.");
+        
+        // Handler untuk visualViewport resize (keyboard muncul/hilang)
+        const viewportHandler = () => {
+            const keyboardHeight = window.innerHeight - window.visualViewport.height;
+            
+            if (keyboardHeight > 50) {
+                // Terapkan padding ke chat container, bukan body
+                chatContainer.style.paddingBottom = `${Math.max(0, keyboardHeight)}px`;
+                scrollToBottom('force');
+            } else {
+                chatContainer.style.paddingBottom = '0px';
+            }
+        };
+        
+        // Tambahkan event listeners
+        window.visualViewport.addEventListener('resize', viewportHandler);
+        window.visualViewport.addEventListener('scroll', viewportHandler);
+        
+        // Tambahkan listener untuk orientasi berubah
+        window.addEventListener('orientationchange', () => {
+            console.log("Orientation changed, adjusting layout.");
+            setTimeout(() => {
+                viewportHandler();
+                scrollToBottom('force');
+            }, 300); // Beri waktu lebih lama untuk orientasi berubah
+        });
+    }
+
+    function setupMobileKeyboardFallback() {
+        // Fallback untuk browser yang tidak mendukung Visual Viewport API
+        messageInput.addEventListener('focus', () => {
+            setTimeout(() => {
+                if (isIOS) {
+                    // iOS fallback
+                    messageInput.scrollIntoView({behavior: 'smooth', block: 'center'});
+                } else {
+                    // Android fallback
+                    const inputPosition = messageInput.getBoundingClientRect().top;
+                    const chatMessagesTop = chatMessagesContainer.getBoundingClientRect().top;
+                    const scrollAmount = inputPosition - chatMessagesTop;
+                    chatMessagesContainer.scrollTop = scrollAmount;
+                }
+                scrollToBottom('force');
+            }, 300);
         });
     }
 
@@ -155,26 +247,26 @@ document.addEventListener('DOMContentLoaded', () => {
         typingAbortController = new AbortController();
         const signal = typingAbortController.signal;
 
-        element.innerHTML = ''; // Kosongkan elemen target
-        const processedText = text.replace(/<br\s*\/?>/gi, '\n'); // Ganti <br> kembali ke newline untuk proses
+        element.innerHTML = '';
+        const processedText = text.replace(/<br\s*\/?>/gi, '\n');
         let index = 0;
 
         return new Promise((resolve) => {
             function typeCharacter() {
                 if (signal.aborted) {
                     console.log("Typing aborted.");
-                    element.innerHTML = text.replace(/\n/g, '<br>'); // Tampilkan sisa teks jika dibatalkan (pastikan ada <br>)
-                    scrollToBottom('force'); // Scroll cepat ke bawah saat batal
-                    resolve(); // Selesaikan promise
+                    element.innerHTML = text.replace(/\n/g, '<br>');
+                    scrollToBottom('force');
+                    resolve();
                     return;
                 }
 
                 if (index < processedText.length) {
                     const char = processedText[index];
                     if (char === '\n') {
-                        element.innerHTML += '<br>'; // Tambahkan <br> untuk newline
+                        element.innerHTML += '<br>';
                     } else {
-                        element.textContent += char; // Gunakan textContent agar aman dari HTML injection
+                        element.textContent += char;
                     }
                     index++;
                     
@@ -183,14 +275,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         scrollToBottom('auto');
                     }
                     
-                    setTimeout(typeCharacter, speed + (Math.random() * speed * 0.5 - speed * 0.25)); // Tambahkan variasi kecepatan
+                    setTimeout(typeCharacter, speed + (Math.random() * speed * 0.5 - speed * 0.25));
                 } else {
-                    typingAbortController = null; // Reset controller
-                    scrollToBottom('force'); // Pastikan scroll ke bawah setelah animasi selesai
-                    resolve(); // Selesai
+                    typingAbortController = null;
+                    scrollToBottom('force');
+                    resolve();
                 }
             }
-            typeCharacter(); // Mulai mengetik
+            typeCharacter();
         });
     }
 
@@ -198,29 +290,26 @@ document.addEventListener('DOMContentLoaded', () => {
     async function sendMessageToAI(userMessageText) {
         if (isAiTyping) return;
 
-        // 1. Tambahkan pesan user ke history & render
         const userMessage = { role: 'user', parts: [{ text: userMessageText.trim() }] };
         chatHistory.push(userMessage);
         setSessionData('chat_history', chatHistory);
-        renderSingleMessage(userMessage); // Ini akan memanggil scrollToBottom()
+        renderSingleMessage(userMessage);
 
-        // 2. Tampilkan indikator loading AI
         isAiTyping = true;
+        userScrolled = false; // Reset user scroll state saat kirim pesan
         typingIndicator.classList.remove('hidden');
-        scrollToBottom('force'); // Pastikan indikator terlihat
+        scrollToBottom('force');
 
-        // 3. Persiapan API Call
-        const apiKey = "AIzaSyDP-3ba4HulshOKZkVzll7bFdGYkcP8bQQ"; // <<< GANTI / GUNAKAN PROXY!
+        const apiKey = "AIzaSyDP-3ba4HulshOKZkVzll7bFdGYkcP8bQQ";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
         if (apiKey === "YOUR_GEMINI_API_KEY" || !apiKey) {
-            console.error("API Key not set"); // Placeholder
+            console.error("API Key not set");
             isAiTyping = false;
             typingIndicator.classList.add('hidden');
             return;
         }
 
-        // 4. Enhanced System Instruction
         const screeningData = getSessionData('screening_results');
         let screeningContext = "[Informasi screening tidak tersedia di sesi ini]";
         if (screeningData && screeningData.answers) {
@@ -232,14 +321,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const systemInstruction = `Kamu adalah Konselor AI Ruang Warna, asisten kesehatan mental yang membantu pengguna memahami perasaan dan pikiran mereka. Berikan dukungan emosional, tips praktis, dan wawasan yang membantu. Hindari memberikan diagnosis medis atau menggantikan bantuan profesional. Jika pengguna menunjukkan tanda-tanda krisis, dorong mereka mencari bantuan profesional segera. ${screeningContext}`;
 
-        // 5. Persiapan History untuk API
         const historyForAPI = chatHistory.slice(-8);
         console.log("ChatJS: Sending to Gemini...");
         
-        let aiResponseText = "Maaf, terjadi kendala. Silakan coba lagi."; // Default error text
+        let aiResponseText = "Maaf, terjadi kendala. Silakan coba lagi.";
 
         try {
-            // 6. API Call
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
@@ -268,12 +355,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }),
             });
 
-            // 7. Parsing Respons
             const responseDataText = await response.text();
             if (!response.ok) { throw new Error(`API Error (${response.status})`); }
             let data = JSON.parse(responseDataText);
 
-            // 8. Ekstrak Teks Respons AI
             if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
                 aiResponseText = data.candidates[0].content.parts[0].text;
             } else if (data.promptFeedback?.blockReason) {
@@ -286,50 +371,27 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("ChatJS: Error sending/processing AI message:", error);
             aiResponseText = `Maaf, terjadi kesalahan teknis (${error.message}). Silakan coba lagi nanti.`;
         } finally {
-            // 9. Sembunyikan Indikator Loading
             typingIndicator.classList.add('hidden');
 
-            // 10. Tambahkan Respons AI ke History
             const aiMessage = { role: 'model', parts: [{ text: aiResponseText.trim() }] };
             chatHistory.push(aiMessage);
             setSessionData('chat_history', chatHistory);
 
-            // 11. Buat Bubble Kosong & Mulai Animasi Ketik
             const aiBubbleWrapper = document.createElement('div');
             aiBubbleWrapper.innerHTML = createMessageHTML(aiMessage);
             const aiBubbleContentElement = aiBubbleWrapper.querySelector('.message-content');
 
             if (aiBubbleContentElement) {
-                aiBubbleContentElement.textContent = ''; // Kosongkan dulu untuk efek ketik
+                aiBubbleContentElement.textContent = '';
                 chatMessagesContainer.appendChild(aiBubbleWrapper.firstElementChild);
-                scrollToBottom('force'); // Scroll sebelum mulai ketik
-                await typeEffect(aiBubbleContentElement, aiResponseText, 35); // Jalankan animasi ketik (ini juga scroll)
+                scrollToBottom('force');
+                await typeEffect(aiBubbleContentElement, aiResponseText, 35);
             } else {
-                renderSingleMessage(aiMessage); // Fallback
+                renderSingleMessage(aiMessage);
             }
 
-            // 12. Izinkan input user lagi SETELAH animasi selesai
             isAiTyping = false;
         }
-    }
-
-    // --- Layout Adjustment Logic ---
-    function adjustLayoutForKeyboard() {
-        if (!window.visualViewport) {
-            console.warn("Visual Viewport API not supported. Keyboard adjustment might not be automatic.");
-            return;
-        }
-
-        const keyboardHeight = window.innerHeight - window.visualViewport.height;
-
-        if (keyboardHeight > 50) {
-            // Terapkan padding ke container chat, bukan body
-            chatContainer.style.paddingBottom = `${Math.max(0, keyboardHeight)}px`;
-        } else {
-            chatContainer.style.paddingBottom = '0px';
-        }
-
-        scrollToBottom('force');
     }
 
     // --- Event Listeners ---
@@ -346,33 +408,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    if (window.visualViewport) {
-        console.log("Visual Viewport API supported. Enabling automatic keyboard adjustment.");
-        window.visualViewport.addEventListener('resize', adjustLayoutForKeyboard);
-
-        window.addEventListener('orientationchange', () => {
-            console.log("Orientation changed, adjusting layout.");
-            setTimeout(() => {
-                adjustLayoutForKeyboard();
-                scrollToBottom('force');
-            }, 150);
-        });
-    } else {
-        console.warn("Visual Viewport API not supported. Using manual scrollTop fallback.");
-        messageInput.addEventListener('focus', () => {
-            setTimeout(() => {
-                const inputPosition = messageInput.getBoundingClientRect().top;
-                const chatMessagesTop = chatMessagesContainer.getBoundingClientRect().top;
-                const scrollAmount = inputPosition - chatMessagesTop;
-
-                chatMessagesContainer.scrollTop = scrollAmount;
-            }, 250);
-        });
-    }
-
     // --- Cleanup pada unload ---
     window.addEventListener('beforeunload', () => {
-        chatContainer.style.paddingBottom = '0px';
+        if (scrollObserver) {
+            scrollObserver.disconnect();
+        }
+        
+        if (chatContainer) {
+            chatContainer.style.paddingBottom = '0px';
+        }
     });
 
     // --- Initial Load ---

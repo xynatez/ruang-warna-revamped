@@ -1,4 +1,4 @@
-/* js/chat.js (REVISED - Visual Viewport API & Enhanced Prompt - FIXED KEYBOARD SCROLL) */
+/* js/chat.js (REVISED - Visual Viewport API & Enhanced Prompt - FIXED KEYBOARD SCROLL - ATTEMPT 2) */
 document.addEventListener('DOMContentLoaded', () => {
     // Pastikan dependensi ada
     if (typeof getResultInterpretation === 'undefined' || typeof resultCategories === 'undefined') {
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- *** Layout Adjustment Logic (BARU - FIXED SCROLL ON FOCUS) *** ---
+    // --- *** Layout Adjustment Logic (BARU - FIXED SCROLL ON FOCUS - ATTEMPT 2) *** ---
     function adjustLayoutForKeyboard() {
         if (!window.visualViewport) {
             console.warn("Visual Viewport API not supported. Keyboard adjustment might not be automatic.");
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // --- Event Listener untuk Visual Viewport & Fallback (BARU - FIXED SCROLL ON FOCUS) ---
+    // --- Event Listener untuk Visual Viewport & Fallback (BARU - FIXED SCROLL ON FOCUS - ATTEMPT 2) ---
     if (window.visualViewport) {
         console.log("Visual Viewport API supported. Enabling automatic keyboard adjustment.");
         // Panggil saat ukuran visual viewport berubah (keyboard muncul/hilang)
@@ -283,13 +283,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     } else {
         // --- Fallback jika Visual Viewport API tidak didukung ---
-        console.warn("Visual Viewport API not supported. Using focus/scrollIntoView fallback.");
+        console.warn("Visual Viewport API not supported. Using manual scrollTop fallback.");
         messageInput.addEventListener('focus', () => {
-            // Saat input difokuskan, coba scroll ke view sebagai alternatif
             setTimeout(() => {
-                // Gunakan 'block: 'end'' untuk memastikan bagian bawah input terlihat
-                messageInput.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            }, 250); // Delay sedikit lebih singkat
+                const inputPosition = messageInput.getBoundingClientRect().top;
+                const chatMessagesTop = chatMessagesContainer.getBoundingClientRect().top;
+                const scrollAmount = inputPosition - chatMessagesTop;
+
+                chatMessagesContainer.scrollTop = scrollAmount;
+            }, 250);
         });
     }
 

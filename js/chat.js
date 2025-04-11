@@ -1,4 +1,4 @@
-/* js/chat.js (REVISED - Cross-Platform Scrolling Fix - FINAL VERSION) */
+/* js/chat.js (FINAL VERSION - Cross-Platform Optimized) */
 document.addEventListener('DOMContentLoaded', () => {
     // Pastikan dependensi ada
     if (typeof getResultInterpretation === 'undefined' || typeof resultCategories === 'undefined') {
@@ -13,6 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return; // Hentikan eksekusi
     }
 
+    // --- Platform Detection ---
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isMobile = isIOS || isAndroid;
+    const isDesktop = !isMobile;
+
     // --- Elemen DOM ---
     const chatMessagesContainer = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
@@ -22,18 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const bodyElement = document.body;
     const chatContainer = document.getElementById('chat-container');
 
-    // --- Platform Detection ---
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isAndroid = /Android/.test(navigator.userAgent);
-    const isMobile = isIOS || isAndroid;
-    const isDesktop = !isMobile;
-
     // --- State ---
     let chatHistory = []; // Format: { role: 'user'/'model', parts: [{text: '...'}] }
     let isAiTyping = false;
     let typingAbortController = null; // Untuk membatalkan animasi ketik jika perlu
     let userScrolled = false;
     let scrollObserver = null;
+    let lastScrollPosition = 0;
 
     // --- Helper ---
     const getSessionData = window.getSessionData || function(key) { console.warn("ChatJS: getSessionData fallback used"); return null; };
@@ -61,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setupDesktopScrollHandlers();
         }
         
+        // Scroll ke bawah setelah inisialisasi
         scrollToBottom('force');
     }
 
@@ -103,14 +105,15 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(() => {
             // Jika user tidak sedang scroll manual atau ini dipanggil dengan 'force'
             if (!userScrolled || behavior === 'force') {
-                // Untuk desktop, gunakan scrollTo dengan behavior
-                if (isDesktop) {
-                    chatMessagesContainer.scrollTo({
-                        top: chatMessagesContainer.scrollHeight,
-                        behavior: behavior === 'force' ? 'auto' : behavior
-                    });
-                } else {
-                    // Untuk mobile, gunakan scrollTop langsung untuk performa lebih baik
+                const scrollOptions = {
+                    top: chatMessagesContainer.scrollHeight,
+                    behavior: behavior === 'force' ? 'auto' : behavior
+                };
+                
+                try {
+                    chatMessagesContainer.scrollTo(scrollOptions);
+                } catch (e) {
+                    // Fallback untuk browser yang tidak mendukung scrollTo dengan options
                     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
                 }
                 
@@ -148,6 +151,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupScrollHandlers() {
         // Deteksi scroll manual user
         chatMessagesContainer.addEventListener('scroll', () => {
+            // Simpan posisi scroll terakhir
+            lastScrollPosition = chatMessagesContainer.scrollTop;
+            
             // Hitung jarak dari bawah
             const distanceFromBottom = 
                 chatMessagesContainer.scrollHeight - 
@@ -186,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setupMobileKeyboardHandlers() {
         if (!window.visualViewport) {
-            console.warn("Visual Viewport API not supported. Keyboard adjustment might not be automatic.");
+            console.warn("Visual Viewport API not supported. Using fallback.");
             setupMobileKeyboardFallback();
             return;
         }
@@ -319,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
             screeningContext = `[Konteks Screening Pengguna (jika relevan): Tipe=${screeningData.screening_type || 'N/A'}, Skor=${interpretation?.score ?? 'N/A'}, Kategori=${interpretation?.category ?? 'N/A'}]`;
         }
         
-const systemInstruction = `Kamu adalah Konselor AI Ruang Warna, asisten kesehatan mental yang dikembangkan oleh Sebastian menggunakan AIS (Alwin Intelligence System). Peranmu adalah menjadi teman curhat dan pendukung emosional bagi pengguna, dengan fokus utama pada kesehatan mental. Ingat pedoman berikut:
+        const systemInstruction = `Kamu adalah Konselor AI Ruang Warna, asisten kesehatan mental yang dikembangkan oleh Sebastian menggunakan AIS (Alwin Intelligence System). Peranmu adalah menjadi teman curhat dan pendukung emosional bagi pengguna, dengan fokus utama pada kesehatan mental. Ingat pedoman berikut:
 
 1. Fokus Tema: Batasi responmu hanya pada topik kesehatan mental, emosi, dan kesejahteraan psikologis. Jika ditanya tentang topik di luar ini (misalnya matematika atau pengetahuan umum), jelaskan dengan sopan bahwa kamu dikhususkan untuk diskusi kesehatan mental.
 
@@ -342,6 +348,7 @@ const systemInstruction = `Kamu adalah Konselor AI Ruang Warna, asisten kesehata
 10. Identitas: Jika ditanya tentang identitasmu, jelaskan bahwa kamu adalah AI yang dikembangkan oleh Sebastian menggunakan AIS, didesain khusus untuk mendukung kesehatan mental.
 
 Ingat, tujuan utamamu adalah menjadi teman curhat yang menyenangkan, suportif, dan membantu meningkatkan mood pengguna sambil memberikan wawasan berharga tentang kesehatan mental.`;
+
         const historyForAPI = chatHistory.slice(-8);
         console.log("ChatJS: Sending to Gemini...");
         
